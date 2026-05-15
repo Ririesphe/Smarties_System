@@ -32,28 +32,6 @@ if os.path.exists(env_path):
     load_dotenv(env_path)
     print(f"[SYSTEM DEBUG] Loaded SMTP_EMAIL: {os.getenv('SMTP_EMAIL')}")
 
-# ---------------- FIREBASE INITIALIZATION ----------------
-try:
-    # Look for service account key in project root
-    cred_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'serviceAccountKey.json')
-    firebase_creds_json = os.getenv('FIREBASE_CREDENTIALS_JSON')
-    if firebase_creds_json:
-        import json
-        cred_dict = json.loads(firebase_creds_json)
-        cred = credentials.Certificate(cred_dict)
-        firebase_admin.initialize_app(cred)
-    elif os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
-    else:
-        # Fallback to default credentials if running in GCP
-        firebase_admin.initialize_app()
-    db = firestore.client(database_id='default')
-    print("[SYSTEM DEBUG] Firestore Initialized Successfully")
-except Exception as e:
-    print(f"[SYSTEM DEBUG] Firestore Initialization Error: {e}")
-    db = None
-
 # ReportLab for PDF generation
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
