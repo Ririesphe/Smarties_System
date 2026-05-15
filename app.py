@@ -76,9 +76,52 @@ FRIENDLY_WORDS = ["hi","hello","please","could you","thank you","kindly"]
 
 DEPARTMENTS = ["IT", "Finance", "HR", "Operations"]
 
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+# Initialize Firebase (Delayed Init to prevent local crashes)
+def get_firestore_db():
+    if not firebase_admin._apps:
+        try:
+            cred = credentials.Certificate('firebase-key.json')
+            firebase_admin.initialize_app(cred)
+        except Exception as e:
+            print(f"Firebase Init Error: {e}")
+    return firestore.client()
+
 # ---------------- APP ----------------
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+
+# ---------------- MIGRATION ROUTE ----------------
+@app.route("/migrate-to-firestore")
+def migrate_to_firestore():
+    """
+    Temporary route to migrate SQLite data to Firestore from Vercel's servers.
+    This bypasses the local computer's time synchronization issue.
+    """
+    try:
+        db = get_firestore_db()
+        conn = get_db()
+        
+        # 1. Users
+        users = conn.execute("SELECT * FROM users").fetchall()
+        for user in users:
+            db.collection('users').document(str(user['id'])).set(dict(user))
+            
+        # 2. Tickets
+        tickets = conn.execute("SELECT * FROM tickets").fetchall()
+        for ticket in tickets:
+            db.collection('tickets').document(str(ticket['id'])).set(dict(ticket))
+            
+        # 3. Notifications
+        notifications = conn.execute("SELECT * FROM notifications").fetchall()
+        for notif in notifications:
+            db.collection('notifications').document(str(notif['id'])).set(dict(notif))
+            
+        return "<h1>Migration to Firestore Complete!</h1><p>Data successfully copied to Google Cloud.</p>"
+    except Exception as e:
+        return f"<h1>Migration Failed</h1><p>{str(e)}</p>"
 
 # ---------------- UPLOADS ----------------
 UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
