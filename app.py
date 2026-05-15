@@ -82,19 +82,21 @@ from firebase_admin import credentials, firestore
 # Initialize Firebase (Delayed Init to prevent local crashes)
 def get_firestore_db():
     if not firebase_admin._apps:
-        try:
-            # Check if we have the credentials as a JSON string in Env Vars (for Vercel)
-            firebase_env = os.getenv('FIREBASE_SERVICE_ACCOUNT')
-            if firebase_env:
+        firebase_env = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+        if not firebase_env:
+            if os.path.exists('firebase-key.json'):
+                cred = credentials.Certificate('firebase-key.json')
+            else:
+                raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable is missing in Vercel!")
+        else:
+            try:
                 import json
                 cred_dict = json.loads(firebase_env)
                 cred = credentials.Certificate(cred_dict)
-            else:
-                # Fallback to local file
-                cred = credentials.Certificate('firebase-key.json')
-            firebase_admin.initialize_app(cred)
-        except Exception as e:
-            print(f"Firebase Init Error: {e}")
+            except Exception as e:
+                raise ValueError(f"Invalid JSON in FIREBASE_SERVICE_ACCOUNT: {e}")
+        
+        firebase_admin.initialize_app(cred)
     return firestore.client()
 
 # ---------------- APP ----------------
