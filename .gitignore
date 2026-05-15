@@ -10,3 +10,4 @@ tickets.db
 scratch/
 serviceAccountKey.json
 app_sqlite_backup.py
+firebase-key.json
