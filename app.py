@@ -78,6 +78,13 @@ def get_firestore_db():
         firebase_admin.initialize_app(cred)
     return firestore.client()
 
+# Define global db safely
+db = None
+try:
+    db = get_firestore_db()
+except Exception as e:
+    print(f"[SYSTEM DEBUG] Global Firestore Initialization deferred: {e}")
+
 # ---------------- APP ----------------
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
